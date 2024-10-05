@@ -60,17 +60,19 @@ def send_email(email: str, pass_time: datetime):
     print(f"Sending email to {email} about satellite pass at {pass_time}")
 
 
-@app.post("/landsat/pass")
+@app.post("/pass")
 def get_landsat_pass_time(request: Request):
-    pass_time = get_pass_time(request.latitude, request.longitude)
+    pass_time = datetime.strptime(
+        get_pass_time(request.latitude, request.longitude), "%Y-%m-%dT%H:%M:%SZ"
+    )
 
-    # notify_time = pass_time - timedelta(minutes=request.lead_time)
+    notify_time = pass_time - timedelta(minutes=request.lead_time)
 
     notification = {
         "email": request.email,
         "longitude": request.longitude,
         "latitude": request.latitude,
-        # "notify_time": notify_time,
+        "notify_time": notify_time,
         "pass_time": pass_time,
     }
     notifications_db.append(notification)
@@ -78,12 +80,12 @@ def get_landsat_pass_time(request: Request):
     return {
         "longitude": request.longitude,
         "latitude": request.latitude,
-        "pass_time": pass_time  # .isoformat(),
-        # "notify_time": notify_time,
+        "pass_time": pass_time,
+        "notify_time": notify_time,
     }
 
 
-@app.get("/landsat/check_notifications")
+@app.get("/check_notifications")
 def check_notifications():
     current_time = datetime.now()
     for notification in notifications_db:
